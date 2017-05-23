@@ -4,10 +4,10 @@
 baseurl:
 url: ""
 date_format: "ordinal"
-title: 码志
-subtitle: "打码改变人生"
-description: "马壮的个人博客"
-keywords: 码志, Zhuang Ma, mzlogin, mazhuang
+title: 怪我咯
+subtitle: "世说长生不息，愿今后不再颠沛流离"
+description: "怪我咯的个人博客"
+keywords: 怪我咯
 favicon: /favicon.ico
 timezone: Asia/Shanghai
 encoding: "utf-8"
@@ -18,7 +18,7 @@ side_bar_repo_limit: 5
 # ---------------- #
 author: heyonly
 github_username: heyonly
-location: Wuhan, China
+location: Beijing, China
 email: myfennyme@163.com
 
 # ---------------- #
