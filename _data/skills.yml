@@ -1,19 +1,16 @@
 - name: Software Engineer Keywords
   keywords:
-      - Java
+      - C
       - C++
-      - Python
+      - Shell
       - Design Patterns
 
 - name: Mobile Developer Keywords
   keywords:
-      - Android
-      - Reverse Engineering
+      - iOS
+      - iOS Reverse Engineering
 
-- name: Windows Developer Keywords
+- name: Linux Operations Keywords
   keywords:
-      - Win32 SDK
-      - DuiLib
-      - WTL
-      - COM
-      - WinDbg
+      - Shell
+      - Python
