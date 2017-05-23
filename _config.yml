@@ -88,7 +88,7 @@ comments_provider: netease_gentie
 disqus_username: heyonly
 #netease_gentie_key: 560ed243b708465d82d5a0a5f3b83da1
 # 在使用网易云跟帖时可点击显示 Disqus
-#lazy_load_disqus : true
+lazy_load_disqus : true
 
 # ---------------- #
 #    Analytics     #
