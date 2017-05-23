@@ -6,4 +6,4 @@ description: hello world
 keywords: hello world
 ---
 
-Content here
+怎么你们老是怪中国
