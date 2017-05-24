@@ -5,10 +5,10 @@ categories: Vim
 description: 个人最常用的 Vim 常用操作。
 keywords: Vim
 ---
-Vim 的常用操作    
-块列选择：ctl+v   
-块行选择：V  
-gg 回到文件头  
+Vim 的常用操作         
+块列选择：ctl+v     
+块行选择：V 
+gg 回到文件头   
 G  定位到文件尾  
 $ 定位到行尾  
 0 定位到行头  
@@ -18,8 +18,8 @@ A 行尾符编辑  
 a 光标下一个字符编辑  
 i 光标上一个字符编辑  
 u 回退  
-yy 复制一行
-nyy 从当前行复制n行  
+yy 复制一行  
+nyy 从当前行复制n行  
 p 粘贴  
 r 替换字符  
 
