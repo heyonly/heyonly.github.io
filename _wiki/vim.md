@@ -33,8 +33,8 @@ s : 表示替换操作
 如将文本中test 替换为haha  
 :%s/test/haha/g  
 #删除所有空行
-:g/^$/d  
-#将That or this 换成 This or that
+:g/^$/d 
+#将That or this 换成 This or that  
 :%s/\(That\) or \(this\)/\u\2 or \l\1/
 
 好了 ，就先介绍这些吧，做笔记用
