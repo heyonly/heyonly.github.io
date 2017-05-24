@@ -6,5 +6,5 @@ description: 个人最常用的 Vim 常用操作。
 keywords: Vim
 ---
 Vim 的常用操作
-块列选择：ctl+v\n
+块列选择：ctl+v  
 块行选择：V
