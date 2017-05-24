@@ -6,12 +6,12 @@ description: 个人最常用的 Vim 常用操作。
 keywords: Vim
 comments: True
 ---
-Vim 的常用操作 
-块列选择：ctl+v  
-块行选择：V  
-gg 回到文件头  
-G  定位到文件尾  
-$ 定位到行尾  
+Vim 的常用操作    
+块列选择：ctl+v   
+块行选择：V   
+gg 回到文件头   
+G  定位到文件尾    
+$ 定位到行尾   
 0 定位到行头  
 o 下一行编辑  
 O 上一行编辑  
