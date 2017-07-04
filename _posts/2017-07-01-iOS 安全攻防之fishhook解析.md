@@ -80,3 +80,19 @@ int main(int argc, char * argv[])
 
 
 
+>插播一段，在上面那段代码中， {{ 与jekyll 的语法冲突，导致jeykll 解析失败。解决办法是：
+
+
+{%raw%}
+
+```
+{%raw%}
+{{中间代码}}
+{%endraw%}
+```
+
+
+{%endraw%}
+
+
+
