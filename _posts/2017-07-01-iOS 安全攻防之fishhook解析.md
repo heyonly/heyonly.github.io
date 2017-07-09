@@ -83,3 +83,149 @@ int main(int argc, char * argv[])
 使用很简单，我们将会来看看是如何实现动态替换的。
 
 
+
+我们看fishhook 的入口
+
+
+
+```
+int rebind_symbols(struct rebinding rebindings[], size_t rebindings_nel) {
+  //调用prepend_rebindings 的函数，将整个rebindings数组添加到这个私有链表的头部
+  int retval = prepend_rebindings(&_rebindings_head, rebindings, rebindings_nel);
+  if (retval < 0) {
+    return retval;
+  }
+  // If this was the first call, register callback for image additions (which is also invoked for
+  // existing images, otherwise, just run on existing images
+  if (!_rebindings_head->next) {//判断是不是第一次调用
+    _dyld_register_func_for_add_image(_rebind_symbols_for_image);
+  } else {
+    uint32_t c = _dyld_image_count();
+    for (uint32_t i = 0; i < c; i++) {
+      _rebind_symbols_for_image(_dyld_get_image_header(i), _dyld_get_image_vmaddr_slide(i));
+    }
+  }
+  return retval;
+}
+```
+
+
+
+对于prepend_rebindings函数，就是一个链表的头插法，就不解释了。但我们注意到函数_dyld_register_func_for_add_image，有函数名我们能猜个大概，当添加image（镜像）时，注册一个回调函数。(⊙v⊙)嗯，大概是这样的。可我们写程序不能靠猜。我们知道dyld 时开源的，我们不妨看看源码：
+
+
+
+```
+/*
+ * _dyld_register_func_for_add_image registers the specified function to be
+ * called when a new image is added (a bundle or a dynamic shared library) to
+ * the program.  When this function is first registered it is called for once
+ * for each image that is currently part of the program.
+ */
+void
+_dyld_register_func_for_add_image(
+void (*func)(const struct mach_header *mh, intptr_t vmaddr_slide))
+{
+	DYLD_LOCK_THIS_BLOCK;
+	typedef void (*callback_t)(const struct mach_header *mh, intptr_t vmaddr_slide);
+    static void (*p)(callback_t func) = NULL;
+
+	if(p == NULL)
+	    _dyld_func_lookup("__dyld_register_func_for_add_image", (void**)&p);
+	p(func);
+}
+```
+
+
+这个注释写得够详细了(英文不太好)，就是当一个添加一个image 时，注册一个回调函数，当这个函数注册后，每个(image)镜像都会调用这个函数一次。也就是说，我们只要注册了这个回调函数，程序中的image 都会调用这个回调函数。这也是fishhook 能够替换函数的前提。
+
+
+
+接下来就是如何找到函数病替换了；
+
+
+```
+static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
+                                     const struct mach_header *header,
+                                     intptr_t slide) {
+  Dl_info info;
+  if (dladdr(header, &info) == 0) {
+    return;
+  }
+
+  segment_command_t *cur_seg_cmd;
+  segment_command_t *linkedit_segment = NULL;
+  struct symtab_command* symtab_cmd = NULL;
+  struct dysymtab_command* dysymtab_cmd = NULL;
+
+  uintptr_t cur = (uintptr_t)header + sizeof(mach_header_t);
+  for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
+    cur_seg_cmd = (segment_command_t *)cur;
+    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
+      if (strcmp(cur_seg_cmd->segname, SEG_LINKEDIT) == 0) {
+        linkedit_segment = cur_seg_cmd;
+      }
+    } else if (cur_seg_cmd->cmd == LC_SYMTAB) {
+      symtab_cmd = (struct symtab_command*)cur_seg_cmd;
+    } else if (cur_seg_cmd->cmd == LC_DYSYMTAB) {
+      dysymtab_cmd = (struct dysymtab_command*)cur_seg_cmd;
+    }
+  }
+
+  if (!symtab_cmd || !dysymtab_cmd || !linkedit_segment ||
+      !dysymtab_cmd->nindirectsyms) {
+    return;
+  }
+
+  // Find base symbol/string table addresses
+  uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
+  nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
+  char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
+
+  // Get indirect symbol table (array of uint32_t indices into symbol table)
+  uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
+
+  cur = (uintptr_t)header + sizeof(mach_header_t);
+  for (uint i = 0; i < header->ncmds; i++, cur += cur_seg_cmd->cmdsize) {
+    cur_seg_cmd = (segment_command_t *)cur;
+    if (cur_seg_cmd->cmd == LC_SEGMENT_ARCH_DEPENDENT) {
+      if (strcmp(cur_seg_cmd->segname, SEG_DATA) != 0 &&
+          strcmp(cur_seg_cmd->segname, SEG_DATA_CONST) != 0) {
+        continue;
+      }
+      for (uint j = 0; j < cur_seg_cmd->nsects; j++) {
+        section_t *sect =
+          (section_t *)(cur + sizeof(segment_command_t)) + j;
+        if ((sect->flags & SECTION_TYPE) == S_LAZY_SYMBOL_POINTERS) {
+          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
+        }
+        if ((sect->flags & SECTION_TYPE) == S_NON_LAZY_SYMBOL_POINTERS) {
+          perform_rebinding_with_section(rebindings, sect, slide, symtab, strtab, indirect_symtab);
+        }
+      }
+    }
+  }
+}
+
+```
+
+对于这部分代码，我们得先看看其他的，再来解释。
+
+
+
+<h6> Dl_info </h6>
+```
+/*
+* Structure filled in by dladdr().
+*/
+typedef struct dl_info {
+        const char      *dli_fname;    /* Pathname of shared object */
+        void            *dli_fbase;    /* Base address of shared object */
+        const char      *dli_sname;    /* Name of nearest symbol */
+        void            *dli_saddr;    /* Address of nearest symbol */
+} Dl_info;
+```
+
+
+
+
