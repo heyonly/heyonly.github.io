@@ -141,7 +141,7 @@ void (*func)(const struct mach_header *mh, intptr_t vmaddr_slide))
 
 
 
-接下来就是如何找到函数病替换了；
+接下来就是如何找到函数并替换了；
 
 
 ```
@@ -225,6 +225,46 @@ typedef struct dl_info {
         void            *dli_saddr;    /* Address of nearest symbol */
 } Dl_info;
 ```
+
+通过dladdr 获取头部信息，判断是否是正确的可执行文件。
+
+
+
+*  fname: 共享对象的路径，即framework 的加载路径。如：
+```
+7D69BB8F-8AB9-3AB1-ADD6-BACB312CE32D 0x0000000103b25000 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk//System/Library/Frameworks/Foundation.framework/Foundation
+```
+
+
+*  dli_fbase: 共享对象的起始地址，即framework的加载地址。如：0x0000000103b25000。
+* dli_saddr: 符号的地址。
+* dli_sname:符号的名字。
+
+
+<h5>符号表</h5>
+符号表是内存地址与函数名、文件名、行号的映射表。符号表元素如下所示：
+
+
+
+<起始地址> <结束地址> <函数> [<文件名：行号>]
+
+
+
+<h5>Mach-O可执行文件</h5>
+
+
+mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与Linux的ELF，每个Mach-o文件都包含一个mach-o 头，然后是载入命令（Load Commands），最后是数据块（data）。
+
+
+
+Mach-O 文件的格式如下图所示：
+
+
+
+![](/images/blog/im1.jpg)
+
+
+
 
 
 
