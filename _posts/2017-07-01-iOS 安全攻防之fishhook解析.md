@@ -20,8 +20,6 @@ keywords: iOS安全攻防,fishhook
 
 {%raw%}
 
-
-
 ```
 #import <dlfcn.h>
 
@@ -214,6 +212,8 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 
 
 <h6> Dl_info </h6>
+
+
 ```
 /*
 * Structure filled in by dladdr().
@@ -236,7 +236,7 @@ typedef struct dl_info {
 ```
 
 
-*  dli_fbase: 共享对象的起始地址，即framework的加载地址。如：0x0000000103b25000。
+* dli_fbase: 共享对象的起始地址，即framework的加载地址。如：0x0000000103b25000。
 * dli_saddr: 符号的地址。
 * dli_sname:符号的名字。
 
@@ -257,15 +257,168 @@ mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与
 
 
 
-Mach-O 文件的格式如下图所示：
+Mach-O 文件的格式如下图所示:
 
 
 
-![](/images/blog/im1.jpg)
+![](/images/blog/852671-9fde036a1ce9d902.jpg)
+
+
+<h5>Header 的结构</h5>
+通过Mach-O的头部，可以快速确认一些信息，比如当前文件用于32位还是64位。当前文件是fat文件 还是thin文件。下面是Mach-O头部的定义：
+
+
+```
+/*
+ * The 32-bit mach header appears at the very beginning of the object file for
+ * 32-bit architectures.
+ */
+struct mach_header {
+	uint32_t	magic;		/* mach magic number identifier */
+	cpu_type_t	cputype;	/* cpu specifier */
+	cpu_subtype_t	cpusubtype;	/* machine specifier */
+	uint32_t	filetype;	/* type of file */
+	uint32_t	ncmds;		/* number of load commands */
+	uint32_t	sizeofcmds;	/* the size of all the load commands */
+	uint32_t	flags;		/* flags */
+};
+
+/* Constant for the magic field of the mach_header (32-bit architectures) */
+#define	MH_MAGIC	0xfeedface	/* the mach magic number */
+#define MH_CIGAM	0xcefaedfe	/* NXSwapInt(MH_MAGIC) */
+
+/*
+ * The 64-bit mach header appears at the very beginning of object files for
+ * 64-bit architectures.
+ */
+struct mach_header_64 {
+	uint32_t	magic;		/* mach magic number identifier */
+	cpu_type_t	cputype;	/* cpu specifier */
+	cpu_subtype_t	cpusubtype;	/* machine specifier */
+	uint32_t	filetype;	/* type of file */
+	uint32_t	ncmds;		/* number of load commands */
+	uint32_t	sizeofcmds;	/* the size of all the load commands */
+	uint32_t	flags;		/* flags */
+	uint32_t	reserved;	/* reserved */
+};
+
+/* Constant for the magic field of the mach_header_64 (64-bit architectures) */
+#define MH_MAGIC_64 0xfeedfacf /* the 64-bit mach magic number */
+#define MH_CIGAM_64 0xcffaedfe /* NXSwapInt(MH_MAGIC_64) */
+
+```
+
+
+注释很详细，也很容易看懂，只是有一个reserved 字段，是64位特有的保留字段。
+
+
+
+如果还不明确，可以使用otool 或者MachOView 查看:
 
 
 
 
+```
+$ otool -h AlipayWallet
+Mach header
+      magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+ 0xfeedface      12          9  0x00           2    75       7580 0x00010085
+Mach header
+      magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+ 0xfeedfacf 16777228          0  0x00           2    75       8400 0x00210085
+```
+
+从以上结果可以知道，输出两个header ，表明这是一个fat 文件。在machine.h 文件中可以找到定义
+
+
+* magic 值是0xfeedface 表示该二进制支持32位
+* cputype 值12 表示arm 可以看看定义：
 
 
 
+	```
+	#define CPU_TYPE_ARM		((cpu_type_t) 12)
+	```
+
+* cpusubtype 值 9 表示 v7
+
+
+	```
+	#define CPU_SUBTYPE_ARM_V7		((cpu_subtype_t) 9)
+	```
+* magic 值0xfeedfacf 表示支持64位
+* cputype 值 16777228 先看看定义
+	
+	
+	```
+	#define CPU_ARCH_ABI64	0x01000000	/* 64 bit ABI */
+	#define CPU_TYPE_ARM		((cpu_type_t) 12)
+	#define CPU_TYPE_ARM64          (CPU_TYPE_ARM | CPU_ARCH_ABI64)
+	```
+	(CPU_TYPE_ARM | CPU_ARCH_ABI64)  对应的十进制位 16777228
+	
+* cpusubtype 值 0
+
+
+	```
+	/*
+ 	*  ARM64 subtypes
+ 	*/
+	#define CPU_SUBTYPE_ARM64_ALL           ((cpu_subtype_t) 0)
+	#define CPU_SUBTYPE_ARM64_V8            ((cpu_subtype_t) 1)
+	```
+	
+* filetype 值  2，表示MH_EXECUTE，代表可执行文件
+
+
+	```
+	#define	MH_OBJECT	0x1		/* relocatable object file */
+	#define	MH_EXECUTE	0x2		/* demand paged executable file */
+	#define	MH_FVMLIB	0x3		/* fixed VM shared library file */
+	#define	MH_CORE		0x4		/* core file */
+	#define	MH_PRELOAD	0x5		/* preloaded executable file */
+	#define	MH_DYLIB	0x6		/* dynamically bound shared library */
+	#define	MH_DYLINKER	0x7		/* dynamic link editor */
+	#define	MH_BUNDLE	0x8		/* dynamically bound bundle file */
+	#define	MH_DYLIB_STUB	0x9		/* shared library stub for static */
+					/*  linking only, no section contents */
+	#define	MH_DSYM		0xa		/* companion file with only debug */
+					/*  sections */
+	#define	MH_KEXT_BUNDLE	0xb		/* x86_64 kexts */
+	```
+
+* flags 定义太多了，就不贴代码了。就贴其中几个
+
+
+	```
+	#define MH_TWOLEVEL	0x80		/* the image is using two-level name
+					   space bindings */
+	#define	MH_PIE 0x200000			/* When this bit is set, the OS will
+					   load the main executable at a
+					   random address.  Only used in
+					   MH_EXECUTE filetypes. */
+	```
+	
+	
+	
+<h5>ASLR</h5>
+ASLR（Address Space Layout Randomization）：地址空间布局随机化，镜像会在随机的地址上加载。这其实是一二十年前的旧技术了。
+
+进程每一次启动，地址空间都会简单地随机化。
+
+对于大多数应用程序来说，地址空间随机化是一个和他们完全不相关的实现细节，但是对于黑客来说，它具有重大的意义。
+
+如果采用传统的方式，程序的每一次启动的虚拟内存镜像都是一致的，黑客很容易采取重写内存的方式来破解程序。采用ASLR可以有效的避免黑客攻击。
+
+当然，你也可以将其去掉，在这篇文章中会教你怎么做.\:[http://codedigging.com/blog/2016-04-27-debugging-ios-binaries-with-lldb/](http://codedigging.com/blog/2016-04-27-debugging-ios-binaries-with-lldb/)
+
+
+<h5>二级名称空间</h5>
+The two-level namespace feature of OS X v10.1 and later adds the module name as part of the symbol name of the symbols defined within it. This approach ensures a module’s symbol names don’t conflict with the names used in other modules.
+
+为了避免不同module 之间符号冲突而在OSX 10.1 以后引入的一项技术。与其对应的是平坦名称空间。
+
+
+
+
+现在头部都弄清楚了。
