@@ -211,10 +211,11 @@ static void rebind_symbols_for_image(struct rebindings_entry *rebindings,
 
 
 
-<h6> Dl_info </h6>
+<h5> Dl_info </h5>
 
 
 ```
+
 /*
 * Structure filled in by dladdr().
 */
@@ -224,18 +225,21 @@ typedef struct dl_info {
         const char      *dli_sname;    /* Name of nearest symbol */
         void            *dli_saddr;    /* Address of nearest symbol */
 } Dl_info;
+
 ```
 
 通过dladdr 获取头部信息，判断是否是正确的可执行文件。
 
 
 
-*  fname: 共享对象的路径，即framework 的加载路径。如：
-```
-7D69BB8F-8AB9-3AB1-ADD6-BACB312CE32D 0x0000000103b25000 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk//System/Library/Frameworks/Foundation.framework/Foundation
-```
+* fname: 共享对象的路径，即framework 的加载路径。如：
 
 
+```
+	7D69BB8F-8AB9-3AB1-ADD6-BACB312CE32D 0x0000000103b25000 /Applications/	Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/	SDKs/iPhoneSimulator.sdk//System/Library/Frameworks/Foundation.framework/	Foundation
+```
+	
+	
 * dli_fbase: 共享对象的起始地址，即framework的加载地址。如：0x0000000103b25000。
 * dli_saddr: 符号的地址。
 * dli_sname:符号的名字。
@@ -253,19 +257,19 @@ typedef struct dl_info {
 <h5>Mach-O可执行文件</h5>
 
 
-mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与Linux的ELF，每个Mach-o文件都包含一个mach-o 头，然后是载入命令（Load Commands），最后是数据块（data）。
 
-
+mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与Linux的ELF，每个Mach-o文件都包含一个mach-o 头，然后是载入命令（Load Commands），最后是数据块（data）.
 
 Mach-O 文件的格式如下图所示:
-
 
 
 ![](/images/blog/852671-9fde036a1ce9d902.jpg)
 
 
+
 <h5>Header 的结构</h5>
 通过Mach-O的头部，可以快速确认一些信息，比如当前文件用于32位还是64位。当前文件是fat文件 还是thin文件。下面是Mach-O头部的定义：
+
 
 
 ```
@@ -309,6 +313,7 @@ struct mach_header_64 {
 ```
 
 
+
 注释很详细，也很容易看懂，只是有一个reserved 字段，是64位特有的保留字段。
 
 
@@ -326,6 +331,7 @@ Mach header
 Mach header
       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
  0xfeedfacf 16777228          0  0x00           2    75       8400 0x00210085
+ 
 ```
 
 从以上结果可以知道，输出两个header ，表明这是一个fat 文件。在machine.h 文件中可以找到定义
