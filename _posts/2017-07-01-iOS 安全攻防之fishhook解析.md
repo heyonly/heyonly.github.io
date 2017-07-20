@@ -422,9 +422,12 @@ The two-level namespace feature of OS X v10.1 and later adds the module name as 
 符号表是内存地址与函数名、文件名、行号的映射表。符号表元素如下所示：
 
 
-<code><起始地址> <结束地址> <函数> [<文件名：行号>] </code>
+
+&lt;起始地址&gt; &lt;结束地址&gt; &lt;函数&gt; [&lt;文件名：行号&gt;]
 
 
 
+![](/images/blog/852671-9fde036a1ce9d902.jpg)
 
-现在头部都弄清楚了。
+
+
