@@ -358,8 +358,8 @@ Mach header
 
 	```
 	/*
- 	*  ARM64 subtypes
- 	*/
+	*  ARM64 subtypes
+	*/
 	#define CPU_SUBTYPE_ARM64_ALL           ((cpu_subtype_t) 0)
 	#define CPU_SUBTYPE_ARM64_V8            ((cpu_subtype_t) 1)
 	```
@@ -422,8 +422,7 @@ The two-level namespace feature of OS X v10.1 and later adds the module name as 
 符号表是内存地址与函数名、文件名、行号的映射表。符号表元素如下所示：
 
 
-
-<起始地址> <结束地址> <函数> [<文件名：行号>]
+<code><起始地址> <结束地址> <函数> [<文件名：行号>] </code>
 
 
 
