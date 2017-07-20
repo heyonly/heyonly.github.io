@@ -245,18 +245,8 @@ typedef struct dl_info {
 * dli_sname:符号的名字。
 
 
-<h5>符号表</h5>
-符号表是内存地址与函数名、文件名、行号的映射表。符号表元素如下所示：
-
-
-
-<起始地址> <结束地址> <函数> [<文件名：行号>]
-
-
 
 <h5>Mach-O可执行文件</h5>
-
-
 
 mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与Linux的ELF，每个Mach-o文件都包含一个mach-o 头，然后是载入命令（Load Commands），最后是数据块（data）.
 
@@ -423,6 +413,17 @@ ASLR（Address Space Layout Randomization）：地址空间布局随机化，镜
 The two-level namespace feature of OS X v10.1 and later adds the module name as part of the symbol name of the symbols defined within it. This approach ensures a module’s symbol names don’t conflict with the names used in other modules.
 
 为了避免不同module 之间符号冲突而在OSX 10.1 以后引入的一项技术。与其对应的是平坦名称空间。
+
+
+
+
+
+<h5>符号表</h5>
+符号表是内存地址与函数名、文件名、行号的映射表。符号表元素如下所示：
+
+
+
+<起始地址> <结束地址> <函数> [<文件名：行号>]
 
 
 
