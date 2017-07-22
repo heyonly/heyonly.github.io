@@ -427,7 +427,5 @@ The two-level namespace feature of OS X v10.1 and later adds the module name as 
 
 
 
-![](/images/blog/852671-9fde036a1ce9d902.jpg)
-
 
 
