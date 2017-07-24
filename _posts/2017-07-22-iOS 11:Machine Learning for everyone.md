@@ -334,6 +334,172 @@ try? handler.perform([faceDetectionRequest, classificationRequest])
 ```
 
 
+Vision 使得计算机视觉变得很容易实现。但是真正的cool 的事情是您可以将这些计算机视觉任务的输出整合到Core ML模型中。结合Core Image，将产生更加令人惊奇的图像处理管道！！
+
+
+
+
+<h4>Metal Performance Shaders</h4>
+
+
+我想讨论的另一个主题是Metal，苹果的GPU API。
+
+
+
+这一年我接触很多工作都是使用[Metal Performance Shaders (MPS)](http://machinethink.net/blog/convolutional-neural-networks-on-the-iphone-with-vggnet/)来创建并优化神经网络。但是iOS 10 仅仅为创建卷积网络提供了最基本的内核。经常需要自己去实现一些内核。
+
+
+
+所以我很高兴iOS 11 能有这些改善。但是更让人高兴的是：我们有创建图的API了！
+
+
+
+<div align="center">
+<img src="/images/blog/Metal@2x.png" align="middle"/>
+</div>
+
+
+
+
+> 注意：为什么你要使用MPS 代替 Core ML？好问题！最大的原因是当Core ML 不支持你想要做的或者当你想完全控制来达到最快的速度的时候。
+
+
+
+
+相对于机器学习中MPS 大的改变是：
+
+
+
+
+<b>循环神经网络.</b>您现在可以创建RNN，LSTM，GRU，和MGU层。它们可以应用在`MPSImage`对象序列也可以应用于`MPSMatrix`对象序列上。其他MPS层只处理图像，因此当你要处理文本或者其他非图像数据时就显得不是那么方便。
+
+
+
+<b>更多的数据类型</b>之前的权重只支持32位浮点数但是现在支持16位浮点数，8位整数，甚至二进制。卷积和完全连接的层可以使用二进制权重和二进制输入。
+
+
+
+**更多的层**知道现在我们只能使用古老的常规卷积和max/average 池，但是现在iOS 11 的MPS可以让您使用扩张卷积（dilated convolution），子像素卷积（subpixel convolution），转置卷积(transposed convolution), 超采样和重采样(upsampling and resampling), L2-norm 池(L2-norm pooling), 扩张max pooling（dilated max pooling）以及一些新的激活函数。MPS并不具备所有的Keras和Caffe层类型，但是现在有了......
+
+
+
+**更加方便**`MPSImage` 的用法有点奇怪，因为Metal 是以4 通道的切片来组织数据（由于图像是由`MTLTexture 支持的`）。但是现在MPSImage 有读取和写入数据的方法，这样不至于经常打断你的思路。
+
+
+
+
+更方便的是`MPSCNNConvolutionDescriptor` 有一些新的方法让你在层上设置batch normalization 参数。这意味着您不再需要将batch normalization 归档到卷积层中，而MPS会为您做这些。
+
+
+
+
+**性能改善** 内核的速度更快了。
+
+
+
+**图形API** 这是我关注的重大好消息。手动创建层和图像总是很繁琐。现在你描述一个图形就像在Keras里那样。MPS将自动计算出图像需要多大，如何处理边框，如何设置偏移等等。可以通过融合层来优化图。
+
+
+
+
+这看起来似乎所有的MPS 内核是通过`NSSecureCoding`，这意味着你可将一个图像保存到一个文件中或者稍后再保存。做出这个图的推理只需要调用一个方法就可以了。尽管还不如CoreML，但是使用MPS 可以为你减少很多工作量。
+
+
+
+
+这件事情对于我而言并没有明显的效果是因为你经常需要自定义内核并且将其整合到图中。在我的客户工作中我发现经常需要一些预处理步骤，这需要使用Metal Shading语言写一些自定义的shader。我能告诉你的是这似乎并没有`MPSNNCustomKernelNode`类。
+
+
+
+
+结论：Metal Performance Shaders在iOS 11 中让机器学习变得更加强大，不过大部分开发者还是要关注Core ML（底层使用了MPS）。
+
+
+
+
+> 注意：新的图形API让我的[ Forge library](https://github.com/hollance/Forge)显得有点过时了，除非你想让你的应用支持iOS 10.稍后我将发布一个使用新的图形API的样本应用并且写更多关于图形API的博客。
+
+
+
+
+
+
+<h4>杂论</h4>
+一些其他的新的东西：
+
+
+
+
+**Accelerate:** 这看起来[Accelerate 框架中的BNNS](http://machinethink.net/blog/apple-deep-learning-bnns-versus-metal-cnn/)并没有太多的更新。它有一个Softmax 层但是并没有被MPS 支持。也许这是正确的：使用CPU进行深度神经网络运算并不是一个好主意。也就是说，我喜欢Accelerate，它有很多好玩的东西。 而今年它确实获得了对稀疏矩阵的更多支持，所以很酷。
+
+
+
+
+**自然语言处理：** Core ML 并不仅仅只是为图像设计的。它还能处理很多其他的数据包括文本数据。`NSLinguisticTagger `类在iOS 11 中更加完美。`NSLinguisticTagger `用于语言识别，标记化，词性标注，词汇化和命名实体识别。
+
+
+
+我没有很多NLP的经验，所以我不能真正地说明它如何与其他NLP框架相结合，但NSLinguisticTagger看起来相当强大。 如果要将NLP添加到应用程序，这个API似乎是一个很好的切入点。
+
+
+
+
+<h4>都是好消息？</h4>
+
+
+
+苹果为开发者提供了一个很好的工具，但也存在很多问题：
+
+
+1. 它是不开源的
+2. 有局限性
+3. 只支持最新的发布版OS
+
+
+
+
+这三个问题集合在一起使得苹果总是拖其他工具的后腿。如果Keras 添加一个新的层类型，我想在苹果更新它的框架和OS 之前你将无法使用Core ML。
+
+
+
+当然我也不期望苹果会给出它的私房菜，像其他机器学习工具一样开源。为什么不讲CoreML开源呢？
+
+
+
+
+知道苹果这可能不会很快发生，但是当您决定将机器学习添加到自己的应用程序中时，至少要牢记以上几点。
+
+
+
+
+**查看英文原文：** [iOS 11: Machine Learning for everyone](http://machinethink.net/blog/ios-11-machine-learning-for-everyone/)
+
+
+
+
+**译者总结**
+
+
+
+在看英文文档的时候，总觉得每个英文单词都认识，也觉得这篇文章好像看懂了，但是让你讲出文章的内容，又似乎支支吾吾的讲不出来，一时语尽。最红决定翻译出来看看。
+
+
+
+
+最近机器学习铺天盖地的刷屏，一个AlphaGo 就能让一堆科技媒体渲染出机器快要统治人类了，老是想占头条。
+
+
+
+新技术层出不穷，保持一颗学习的心。学的越多就发现自己越是无知。
+
+
+
+英语很重要，至少国内还没有看到这么优秀的博客。
+
+
+
+
+
 
 
 
