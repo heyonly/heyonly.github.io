@@ -3,7 +3,7 @@ layout: post
 title: iOS 11:Machine Learning for everyone 
 categories: translation
 description: Machine Learning
-keywords: Machine Learning,iOS Machine Learning
+keywords: Machine Learning,iOS Machine Learning,iOS 11: Machine Learning for everyone
 ---
 
 在刚刚过去的WWDC 2017上，一件很引人注目的事情：苹果全面进军机器学习。
