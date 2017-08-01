@@ -253,7 +253,7 @@ mach-o 格式是OS X系统上的可执行文件格式，类似于Windows的PE与
 Mach-O 文件的格式如下图所示:
 
 
-![](/images/blog/8forumImage20161108150811483.png)
+![](/images/blog/forumImage20161108150811483.png)
 
 
 
