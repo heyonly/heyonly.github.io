@@ -429,3 +429,137 @@ The two-level namespace feature of OS X v10.1 and later adds the module name as 
 
 
 
+<h5>Load command</h5>
+
+
+
+load command 直接跟在header 部分的后面，其结构定义如下：
+
+
+
+```
+struct load_command {
+	uint32_t cmd;		/* type of load command */
+	uint32_t cmdsize;	/* total size of command in bytes */
+};
+```
+
+
+
+所有command 的大小已经在mach_header 中的sizeofcommand 中给出，所有的load command 头两个字段必须是cmd 和cmdsize。cmd 是command 具体的类型。cmdsize是command 的所占的字节。
+
+
+接下来就是从command 中提取出符号表，字符窜表以及间接符号表。
+
+
+
+
+```
+  // Find base symbol/string table addresses
+  uintptr_t linkedit_base = (uintptr_t)slide + linkedit_segment->vmaddr - linkedit_segment->fileoff;
+  nlist_t *symtab = (nlist_t *)(linkedit_base + symtab_cmd->symoff);
+  char *strtab = (char *)(linkedit_base + symtab_cmd->stroff);
+
+  // Get indirect symbol table (array of uint32_t indices into symbol table)
+  uint32_t *indirect_symtab = (uint32_t *)(linkedit_base + dysymtab_cmd->indirectsymoff);
+```
+
+
+
+在linkedit_segment 结构体中获取虚拟地址，以及文件偏移量。通过公式：slide + vmaffr -fileoff 计算出当前_LINKEDIT 段的位置。类似的，在symtab_command 中获取符号表和间接符号表、字符窜表。
+
+
+
+
+* 间接符号表的元素都是uint32_t *,指针的值对应条目n_list 在符号表中的位置
+
+
+
+
+
+* 符号表中的元素都是nlist_t 结构，其中包含了当前符号在字符窜表中的下标
+
+```
+/*
+ * This is the symbol table entry structure for 64-bit architectures.
+ */
+struct nlist_64 {
+    union {
+        uint32_t  n_strx; /* index into the string table */
+    } n_un;
+    uint8_t n_type;        /* type flag, see below */
+    uint8_t n_sect;        /* section number or NO_SECT */
+    uint16_t n_desc;       /* see <mach-o/stab.h> */
+    uint64_t n_value;      /* value of this symbol (or stab offset) */
+};
+```
+
+
+
+最后查找整个镜像中SECTION_TYPE 为 S_LAZY_SYMBOL_POINTERS 和S_NON_LAZY_SYMBOL_POINTERS 的section。在perform_rebinding_with_section 进行处理。
+
+
+
+
+```
+if (cur->rebindings[j].replaced != NULL &&
+              indirect_symbol_bindings[i] != cur->rebindings[j].replacement) {
+            *(cur->rebindings[j].replaced) = indirect_symbol_bindings[i];
+          }
+          indirect_symbol_bindings[i] = cur->rebindings[j].replacement;
+
+```
+
+
+
+
+在该函数中将符号表中的symbol_name 与rebinding 中的名字name 进行比较，则将origin_open 指向原函数的地址，并将原函数指针的指向新的函数实现。整个hook 过程完成。
+
+
+
+<h5>总结</h5>
+
+
+
+首先、通过使用_dyld_register_func_for_add_image 给镜像注册一个回调，这样每个加载的镜像都会调用这个回调，这是能够hook 的基础。
+
+
+第二、通过公式：slide + vmaffr -fileoff 获取符号表及字符窜表的基地址，然后获取符号表以及字符窜表。
+
+
+
+第三、遍历符号表数组 indirect_symbol_indices * 中的所有符号表中，获取其中的符号表索引 symtab_index
+
+
+
+第四、通过符号表索引 symtab_index 获取符号表中某一个 n_list 结构体，得到字符串表中的索引 symtab[symtab_index].n_un.n_strx
+
+
+
+第五、通过比较符号的名字，匹配则进行替换。整个过程完成。
+
+
+
+注意：这里有个问题，在我们注册的回调函数使用	`NSLog(@"%s",_dyld_get_image_name(i));`会发现，我们自己的镜像也会加载，但是无法hook。这里请移步[动态修改 C 语言函数的实现](http://draveness.me/fishhook.html)。
+
+
+
+
+<h5>dyld 的共享缓存</h5>
+
+最后，你可能会发现，我明明hook了一个系统c函数，却没有hook 住。这就牵涉到dyld 的缓存技术。
+
+
+
+当你构建一个真正的程序时，将会链接各种各样的库，他们又会依赖其他一些framework和动态库，这些动态库的加载会非常多，而且有依赖，加载时采用递归的方式进行加载，处理这些成千上万个符号需要花费很长时间：一般是好几秒钟。但实际上，却花不了这么长时间。
+
+
+
+
+这就是苹果在OSX和iOS上花了相当大的努力。为了缩短这个处理过程所花费时间，苹果在OSX 和iOS 上的链接器使用了共享缓存，共享缓存存于/var/db/dyld/。对于每一种架构，操作系统都有一个单独的文件，文件中包含了绝大多数的动态库，这些苦已经链接为一个文件，并且已经处理好了他们之间的符号关系。当加载一个 Mach-O 文件 (一个可执行文件或者一个库) 时，动态链接器首先会检查 共享缓存 看看是否存在其中，如果存在，那么就直接从共享缓存中拿出来使用。每一个进程都把这个共享缓存映射到了自己的地址空间中。这个方法大大优化了 OS X 和 iOS 上程序的启动时间。也就是说，只要有缓存，他们之间的符号关系就已经确定，无需解析，这就是导致hook 失败的原因。
+
+
+
+
+参考：
+[Mach-O 可执行文件](https://objccn.io/issue-6-3/)
