@@ -373,8 +373,10 @@ parent = Transforms
 ```
 
 最后，重新编译，不出意外，应该是成功的。
+使用命令行编译：Xcode 直接编译报错
+`cmake -G Xcode -DLLVM_ENABLE_ASSERTIONS=On -DCMAKE_BUILD_TYPE=Debug ../`
 
-
+之后再用Xcode 后就好了。
 最后测试：
 
 
