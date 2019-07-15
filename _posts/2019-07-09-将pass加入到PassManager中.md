@@ -1,8 +1,8 @@
 ---
 layout: post   
-title: LLVM 使用其他pass 
+title: LLVM 将pass加入到PassManager 
 categories: LLVM
-description: LLVM 使用其他pass  
+description: LLVM 将pass加入到PassManager
 keywords: LLVM, LLVM Pass 
 ---
 
