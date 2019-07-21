@@ -1,10 +1,14 @@
 ---
 layout: post   
-title: LLVM 前端（Clang） 
+title: The Frontend 
 categories: LLVM
-description: LLVM 前端（Clang） 
+description: The Frontend 
 keywords: LLVM, LLVM 前端（Clang） 
 ---
+
+以下来自  <b>Getting Started with LLVM Core Libraries</b> 翻译
+
+
 
 
 在特定于目标的代码生成之前，编译器前端将源代码转换为编译器的IR。由于编程语言具有不同的语法和语义域，因此前端通常处理a
