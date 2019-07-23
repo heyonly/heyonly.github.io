@@ -1,3 +1,10 @@
+---
+layout: post   
+title: Building LLVM IR   
+categories: LLVM
+description: Building LLVM IR  
+keywords: LLVM, Building LLVM IR
+---
 高级编程语言便于人和机器交互。目前大多数的高级语言都包含 变量，循环，if-else 判断语句，块，函数这些基本元素。变量保存数据类型的值，一个基本块确定变量的作用域。一个if-else 语句决定代码执行路径。一个函数可以让代码块重用。高级语言可能在类型检查，类型转换，变量声明，复杂数据类型方面有所不同.但是，几乎所有其他语言都具有本节前面列出的基本构建块
 
 
