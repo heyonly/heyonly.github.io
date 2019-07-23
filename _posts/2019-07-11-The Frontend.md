@@ -1,10 +1,14 @@
 ---
 layout: post   
-title: LLVM 前端（Clang） 
+title: The Frontend 
 categories: LLVM
-description: LLVM 前端（Clang） 
+description: The Frontend 
 keywords: LLVM, LLVM 前端（Clang） 
 ---
+
+以下来自  <b>Getting Started with LLVM Core Libraries</b> 翻译
+
+
 
 
 在特定于目标的代码生成之前，编译器前端将源代码转换为编译器的IR。由于编程语言具有不同的语法和语义域，因此前端通常处理a
@@ -53,14 +57,16 @@ clang -cc1工具的一个重要方面（和混淆源）是它不仅实现了编�
 
 
 ```
-$ clang hello.c -###
-clang version 3.4 (tags/RELEASE_34/final 211335)
-Target: i386-pc-linux-gnu
+$ clang hello.c -o hello -###
+Apple LLVM version 10.0.1 (clang-1001.0.46.4)
+Target: x86_64-apple-darwin18.5.0
 Thread model: posix
- "clang" "-cc1" (...parameters) "hello.c" "-o" "/tmp/hello-dddafc1.o"
- "/usr/bin/ld" (...parameters) "/tmp/hello-ddafc1.o" "-o" "hello"
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" "-cc1" "-triple" "x86_64-apple-macosx10.14.0" "-Wdeprecated-objc-isa-usage" "-Werror=deprecated-objc-isa-usage" "-emit-obj" "-mrelax-all" "-disable-free" "-disable-llvm-verifier" "-discard-value-names" "-main-file-name" "hello.c" "-mrelocation-model" "pic" "-pic-level" "2" "-mthread-model" "posix" "-mdisable-fp-elim" "-fno-strict-return" "-masm-verbose" "-munwind-tables" "-target-sdk-version=10.14" "-target-cpu" "penryn" "-dwarf-column-info" "-debugger-tuning=lldb" "-target-linker-version" "450.3" "-resource-dir" "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.1" "-isysroot" "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" "-I/usr/local/include"
+ .....
 ```
-> 我的什么输出都没有
+
+
 
 
 我们省略了驱动程序使用的完整参数列表。第一行显示clang -cc1进行从C源文件到目标代码的编译。然后，最后一行显示Clang仍然依赖于系统链接器来完成编译。
@@ -182,46 +188,46 @@ def err_invalid_token_after_toplevel_declarator : Error<
 
 ```
 extern "C" {
-   #include "clang-c/Index.h"
-   }
-   #include "llvm/Support/CommandLine.h"
-   #include <iostream>
-   using namespace llvm;
-   static cl::opt<std::string>
-   FileName(cl::Positional, cl::desc("Input file"), cl::Required);
-   int main(int argc, char** argv)
-   {
-     cl::ParseCommandLineOptions(argc, argv, "Diagnostics Example");
-     CXindex index = clang_createIndex(0, 0);
-     const char *args[] = {
-       "-I/usr/include",
-"-I." };
-     CXTranslationUnit translationUnit = clang_parseTranslationUnit
-       (index, FileName.c_str(), args, 2, NULL, 0,
-       CXTranslationUnit_None);
-     unsigned diagnosticCount = clang_getNumDiagnostics(translationUnit);
-     for (unsigned i = 0; i < diagnosticCount; ++i) {
-       CXDiagnostic diagnostic = clang_getDiagnostic(translationUnit, i);
-       CXString category = clang_getDiagnosticCategoryText(diagnostic);
-       CXString message = clang_getDiagnosticSpelling(diagnostic);
-       unsigned severity = clang_getDiagnosticSeverity(diagnostic);
-       CXSourceLocation loc = clang_getDiagnosticLocation(diagnostic);
-       CXString fName;
-       unsigned line = 0, col = 0;
-       clang_getPresumedLocation(loc, &fName, &line, &col);
-       std::cout << "Severity: " << severity << " File: "
-                 << clang_getCString(fName) << " Line: "
-                 << line << " Col: " << col << " Category: \""
-                 << clang_getCString(category) << "\" Message: "
-                 << clang_getCString(message) << std::endl;
-clang_disposeString(fName);
-  clang_disposeString(message);
-  clang_disposeString(category);
-  clang_disposeDiagnostic(diagnostic);
+#include "clang-c/Index.h"
 }
-clang_disposeTranslationUnit(translationUnit);
-clang_disposeIndex(index);
-return 0;
+#include "llvm/Support/CommandLine.h"
+#include <iostream>
+using namespace llvm;
+static cl::opt<std::string>
+FileName(cl::Positional, cl::desc("Input file"), cl::Required);
+int main(int argc, char** argv)
+{
+    cl::ParseCommandLineOptions(argc, argv, "Diagnostics Example");
+    CXIndex index = clang_createIndex(0, 0);
+    const char *args[] = {
+        "-I/usr/include",
+        "-I."
+    };
+    CXTranslationUnit translationUnit = clang_parseTranslationUnit(index, FileName.c_str(), args, 2, NULL, 0, CXTranslationUnit_None);
+    unsigned diagnosticCount = clang_getNumDiagnostics(translationUnit);
+    for (unsigned i = 0; i < diagnosticCount; ++i) {
+        CXDiagnostic diagnostic = clang_getDiagnostic(translationUnit, i);
+        CXString category = clang_getDiagnosticCategoryText(diagnostic);
+        CXString message = clang_getDiagnosticSpelling(diagnostic);
+        unsigned severity = clang_getDiagnosticSeverity(diagnostic);
+        CXSourceLocation loc = clang_getDiagnosticLocation(diagnostic);
+        CXString fName;
+        unsigned line = 0, col = 0;
+        clang_getPresumedLocation(loc, &fName, &line, &col);
+        std::cout << "Severity: " << severity << " File: "
+                << clang_getCString(fName) << " Line: "
+                << line << " Col: " << col << " Category: \""
+                << clang_getCString(category) << "\" Message: "
+                << clang_getCString(message) << std::endl;
+        
+        clang_disposeString(fName);
+        clang_disposeString(message);
+        clang_disposeString(category);
+        clang_disposeDiagnostic(diagnostic);
+    }
+    clang_disposeTranslationUnit(translationUnit);
+    clang_disposeIndex(index);
+    return 0;
 }
 ```
 
