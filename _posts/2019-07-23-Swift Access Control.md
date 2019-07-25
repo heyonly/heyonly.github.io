@@ -278,5 +278,9 @@ private 只能在本类的作用域且在当前文件内能访问
 
 
 
+[1]\:[Access Control](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html)
+
+
+
 
 
