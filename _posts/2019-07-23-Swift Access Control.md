@@ -215,7 +215,7 @@ private class SomePrivateClass {                // explicitly private class
 
 
 
-元组类型
+元组
 
 
 
@@ -227,13 +227,199 @@ private class SomePrivateClass {                // explicitly private class
 
 
 
-函数类型
+函数
 
 
 
 
 函数类型的访问界别是根据函数的参数及返回值类型的访问级别计算的。如果函数计算出来的访问级别与实际的不匹配，则必须显示的指定函数的每一个部分的访问级别。
 
+
+
+
+下面的例子定义了一个全局的function，`someFunction()`,没有显示指定访问级别，你预期它可能是默认访问级别`internal`，但是它不是，事实上，`somefunction` 并没有像下面写的那样编译：
+
+
+
+
+```
+func someFunction() -> (SomeInternalClass, SomePrivateClass) {
+    // function implementation goes here
+}
+```
+
+
+
+函数的返回值是一个有两个元素的元组，一个是internal 的class，另一个是private 的class，因此两个元素合并成元组时，元组的访问级别是private
+
+
+因为元组的返回值类型是private ，您必须显示写明访问级别，如下：
+
+
+```
+private func someFunction() -> (SomeInternalClass, SomePrivateClass) {
+    // function implementation goes here
+}
+```
+
+
+枚举
+
+
+
+枚举的各个case 自动接收与它们所属的枚举相同的访问级别。不能为单个枚举case指定不同的访问级别。
+
+
+
+
+在下面的例子中，`CompassPoint` 枚举有一个限制指定的`public`访问级别，因此，枚举的各个case 也有`public` 的访问级别。
+
+
+```
+public enum CompassPoint {
+    case north
+    case south
+    case east
+    case west
+}
+```
+
+
+
+Raw Values and Associated Values
+
+
+
+在枚举中定义的`raw values and associated values`具有和枚举一样高的访问级别，您不能在一个internal 访问级别的枚举中给`raw-value` 添加 private access Control . for example： nothing。
+
+
+
+嵌套（Nested types）
+
+
+
+在一个private 定义的类型中嵌套具有private 的级别。在file-private 中定义的嵌套具有file-private 级别。在public 和internal类型中定义的嵌套自动具有internal 级别。如果您想在public 定义的类型中的嵌套具有public 级别，则必须显示声明public 级别。
+
+
+
+
+
+子类
+
+
+
+您可以子类化当前可访问的上下文。一个子类不能具有比父类更高级别的访问权限。例如，您不能将一个public 子类继承 internal 的权限的父类 （you can’t write a public subclass of an internal superclass.）大概就是这意思，不知道怎么表述。
+
+
+
+另外，您可以重写当前上下文可见的类成员（method、property、initializers，or，subscript）
+
+
+
+
+重写可能导致继承的类成员拥有别父类更高界别的访问权限。在下面的例子中类A 的`somemethod()`是file-private 的权限，而类B 是A 的子类，权限递减到internal ，但是类B使用internal 复写了`somemethod` 方法，使得子类的somemethod 的权限高于原来的权限：
+
+
+
+```
+public class A {
+    fileprivate func someMethod() {}
+}
+
+internal class B: A {
+    override internal func someMethod() {}
+}
+```
+
+
+
+您可以这么用：
+
+
+
+
+```
+public class A {
+    fileprivate func someMethod() {}
+}
+
+internal class B: A {
+    override internal func someMethod() {
+        super.someMethod()
+    }
+}
+```
+
+
+
+
+Constants, Variables, Properties, and Subscripts
+
+
+
+A constant, variable, or property 不能具有比它类型更高的访问权限。在一个private 类型写一个public 的属性是无效的。
+
+
+If a constant, variable, property, or subscript makes use of a private type, the constant, variable, property, or subscript must also be marked as private:
+
+
+```
+private var privateInstance = SomePrivateClass()
+```
+
+
+
+Getters and Setters
+
+
+
+constants 、variables、properies and subscripts  的get、set方法自动接收具有相同级别的值。
+
+
+
+您可以为 setter 提供比其相应的 getter 更低的访问级别,以限制该变量、属性或下标的读写范围。通过在 var 或subscript 之前标记fileprivate(set), private(set), or internal(set),来分配相应的访问级别。
+
+
+
+> 此规则适用于存储的属性和计算属性.即使您不为存储属性显示的声明getter 和setter 方法，swift 仍然会隐式的生成getter 和setter 方法，以便提供对存储属性的访问，通过使用fileprivate(set),private(set),internal(set)来同步的改变其访问权限。用同样的方式对计算属性的setter 方法显示的声明，已提供精确的访问权限。
+
+
+
+
+下面定义一个结构`TrackedString` 用来保持string被改变的次数：
+
+
+
+
+```
+struct TrackedString {
+    private(set) var numberOfEdits = 0
+    var value: String = "" {
+        didSet {
+            numberOfEdits += 1
+        }
+    }
+}
+```
+
+
+
+
+结构体定义了一个存储属性value，定义了一个 integer 属性 `numberOfEdits`.用来计算value 被改变的次数。
+
+
+
+
+
+
+```
+var stringToEdit = TrackedString()
+stringToEdit.value = "This string will be tracked."
+stringToEdit.value += " This edit will increment numberOfEdits."
+stringToEdit.value += " So will this one."
+print("The number of edits is \(stringToEdit.numberOfEdits)")
+// Prints "The number of edits is 3"
+``` 
 
 
 
