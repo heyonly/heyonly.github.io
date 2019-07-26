@@ -246,3 +246,24 @@ printInt(atAddress: numbers)
 var mutableNumbers = numbers
 printInt(atAddress: &mutableNumbers)
 ```
+
+
+
+以上是苹果文档提供的一些例子，下面这篇文章相当不错，而且这个网站博客和课程质量非常高，以后就不用到处找资料了。
+
+
+
+[iOS&Swift Tutorials](https://www.raywenderlich.com/780-unsafe-swift-using-pointers-and-interacting-with-c)
+
+
+
+
+
+
+
+
+[1]\:  [iOS&Swift Tutorials](https://www.raywenderlich.com/780-unsafe-swift-using-pointers-and-interacting-with-c)
+
+
+[2]\:  [https://developer.apple.com/documentation/swift/unsafepointer](https://developer.apple.com/documentation/swift/unsafepointer)
+
