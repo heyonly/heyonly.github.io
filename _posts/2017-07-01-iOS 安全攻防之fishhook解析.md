@@ -258,6 +258,9 @@ Mach-O 文件的格式如下图所示:
 
 
 <h5>Header 的结构</h5>
+
+
+
 通过Mach-O的头部，可以快速确认一些信息，比如当前文件用于32位还是64位。当前文件是fat文件 还是thin文件。下面是Mach-O头部的定义：
 
 
@@ -465,11 +468,15 @@ struct load_command {
 ```
 
 
+
+```
 #define SEG_PAGEZERO "__PAGEZERO" /* 当时 MH_EXECUTE 文件时，捕获到空指针 */
 #define SEG_TEXT "__TEXT" /* 代码/只读数据段 */
 #define SEG_DATA "__DATA" /* 数据段 */
 #define SEG_OBJC "__OBJC" /* Objective-C runtime 段 */
 #define SEG_LINKEDIT "__LINKEDIT" /* 包含需要被动态链接器使用的符号和其他表，包括符号表、字符串表等 */
+```
+
 
 在linkedit_segment 结构体中获取虚拟地址，以及文件偏移量。通过公式：slide + vmaffr -fileoff 计算出当前_LINKEDIT 段的位置。
 
