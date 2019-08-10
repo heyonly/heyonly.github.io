@@ -465,8 +465,13 @@ struct load_command {
 ```
 
 
+#define SEG_PAGEZERO "__PAGEZERO" /* 当时 MH_EXECUTE 文件时，捕获到空指针 */
+#define SEG_TEXT "__TEXT" /* 代码/只读数据段 */
+#define SEG_DATA "__DATA" /* 数据段 */
+#define SEG_OBJC "__OBJC" /* Objective-C runtime 段 */
+#define SEG_LINKEDIT "__LINKEDIT" /* 包含需要被动态链接器使用的符号和其他表，包括符号表、字符串表等 */
 
-在linkedit_segment 结构体中获取虚拟地址，以及文件偏移量。通过公式：slide + vmaffr -fileoff 计算出当前_LINKEDIT 段的位置。类似的，在symtab_command 中获取符号表和间接符号表、字符窜表。
+在linkedit_segment 结构体中获取虚拟地址，以及文件偏移量。通过公式：slide + vmaffr -fileoff 计算出当前_LINKEDIT 段的位置。
 
 
 
