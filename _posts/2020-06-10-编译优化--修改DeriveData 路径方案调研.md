@@ -90,12 +90,17 @@ $ docker run -it --name haibing_samba_share01 -P \
 ```
 如果出现一串字符，docker 的标识符，表示docker 创建成功
 以上参数说明参考[dperson/samba](https://github.com/dperson/samba)
+
+查看docker 状态
+
 ```
 $ docker ps -a
+
 CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS                        PORTS                                                                                                                                            NAMES
 7a53eb2cdb43        dperson/samba       "/sbin/tini -- /usr/…"   About a minute ago   Up About a minute (healthy)   0.0.0.0:32836->131/tcp, 0.0.0.0:32801->137/udp, 0.0.0.0:32800->138/udp, 0.0.0.0:32835->139/tcp, 0.0.0.0:32834->444/tcp, 0.0.0.0:32833->445/tcp   haibing_samba_share01
+
 ```
-查看docker 状态
+
 
 ```
 Couldn't create workspace arena folder '/Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr': Unable to write to info file '<DVTFilePath:0x7fce04f551d0:'/Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr/info.plist'>'.
