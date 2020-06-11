@@ -8,7 +8,7 @@ keywords: docker，编译优化
 
 一、背景需求
 
-由于微博项目编译时间太长（编译一次大概需要70分钟），出现线上问题后，无法迅速排查问题，业务组同学提出了需求，希望将排查问题时，编译时间缩短，经过讨论，就有了以下方案
+由于XX项目编译时间太长（编译一次大概需要70分钟），出现线上问题后，无法迅速排查问题，业务组同学提出了需求，希望将排查问题时，编译时间缩短，经过讨论，就有了以下方案
 
 二、方案
 
@@ -28,7 +28,7 @@ keywords: docker，编译优化
 
 三、调研过程
 
-
+<b>使用docker 提供samba 服务</b>
 
 1、docker 搭建，参考 [Docker 教程](https://www.runoob.com/docker/docker-tutorial.html)
 
@@ -101,7 +101,95 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
 
 ```
 
+```
+$ docker inspect 6bf88c1acf30   //查看更加详细的信息
+```
+
+3、将共享目录挂载到xcode 主机
+
+a. 使用图形化
+
+![](/images/blog/compile/2020-06-11-3.40.07.png)
+
+b. 使用如下命令
 
 ```
-Couldn't create workspace arena folder '/Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr': Unable to write to info file '<DVTFilePath:0x7fce04f551d0:'/Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr/info.plist'>'.
+$ mount_smbfs -f 0777 -d 0777 smb://test01:asdf@10.235.11.29:32843/test01 /Users/haibing6/docker/
+$ df
+Filesystem                         512-blocks      Used Available Capacity   iused      ifree %iused  Mounted on
+/dev/disk1s1                        489620264  21102160  94537688    19%    483956 2447617364    0%   /
+devfs                                     382       382         0   100%       662          0  100%   /dev
+/dev/disk1s2                        489620264 353626696  94537688    79%   2407025 2445694295    0%   /System/Volumes/Data
+/dev/disk1s5                        489620264  18874520  94537688    17%         9 2448101311    0%   /private/var/vm
+map -fstab                                  0         0         0   100%         0          0  100%   /System/Volumes/Data/Network/Servers
+//jungao@10.235.24.27/share         489620264 286403792 203216472    59%  35800472   25402059   58%   /Volumes/share
+//test01@10.235.11.29:32843/test01  959337808 548458560 410879248    58% 274229278  205439624   57%   /Users/haibing6/docker
 ```
+
+4、将xcode DeriverData 目录设置为 `/Users/haibing6/docker` 
+
+5、在docker 内将目录权限设置为 0777，liunx 真机设置为 0777，xcode 主机设置为 挂载时将权限设置为 0777，如果使用图形化挂载，无法更改权限
+
+开始 build 
+
+
+
+<b>使用linux 真机提供samba 服务</b>
+
+```
+Couldn't create workspace arena folder '/Volumes/test01/Developer/Xcode/DerivedData/Weibo-
+aieyofptoenervabpoivclypymrr': Unable to write to info file '<DVTFilePath:0x7fce04f551d0:'/
+Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr/info.plist'>'.
+```
+
+
+
+```
+error: failed writing unit data: failed to rename '/Volumes/test01/Developer/Xcode/DerivedData/
+Weibo-aieyofptoenervabpoivclypymrr/Index/DataStore/v5/UIKit-1V5UHAPTOD24G.pcm-32VHFZ4YQ9L0N-
+bc1ed27a' to '/Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr/
+Index/DataStore/v5/units/UIKit-1V5UHAPTOD24G.pcm-32VHFZ4YQ9L0N': File exists
+1 error generated.
+In file included from /Users/haibing6/work/weibomain/WeiboMain2/WeiboMain/Weibo/
+StickerExtension/WBStickerBrowserViewController.m:9:
+/Users/haibing6/work/weibomain/WeiboMain2/WeiboMain/Weibo/StickerExtension/
+WBStickerBrowserViewController.h:9:9: fatal error: could not build module 'UIKit'
+#import <UIKit/UIKit.h>
+ ~~~~~~~^
+2 errors generated.
+```
+
+对于以上错误，将UIKit.framework 添加到 `Link Binary With Libraries` 中，添加 `New Run Script Phase`，
+内容：
+
+```
+rm -rf /Volumes/test01/Developer/Xcode/DerivedData/Weibo-aieyofptoenervabpoivclypymrr/Ind
+ex/DataStore/*
+```
+
+重新编译仍然报`failed to rename `这个错误
+
+
+```
+In short, Cocoapods and New build system don’t work well together.
+
+Conclusion
+The new build system from Apple is designed to improve the performance, stability and 
+reliability of the Swift build. It will catch the configuration errors early in the application
+development. It’s been activated by default in Xcode 10 so sooner or later we have to update 
+our build process to adapt to the new build system. 
+
+```
+
+尝试着将`new build system` 改为 `legacy build system`
+
+再次编译，仍然报原来的错误
+
+
+接着进行一下尝试：
+
+
+在xcode主机上编译成功后，将DeriveData 拷贝到linux 主机，再次编译，仍然报原来的错误
+
+
+<b>使用Mac 机器提供samba 服务</b>
