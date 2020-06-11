@@ -89,7 +89,7 @@ $ docker run -it --name haibing_samba_share01 -P \
 7a53eb2cdb431abad1ebd5214f3fabb868ce8c8e1dd40bd33f4a2fa55f19be03
 ```
 如果出现一串字符，docker 的标识符，表示docker 创建成功
-以上参数说明参考[dperson/samba](https://github.com/dperson/samba)
+以上参数说明参考 [dperson/samba](https://github.com/dperson/samba)
 
 查看docker 状态
 
@@ -109,7 +109,6 @@ $ docker inspect 6bf88c1acf30   //查看更加详细的信息
 
 a. 使用图形化
 
-![](/images/blog/compile/2020-06-11-3.40.07.png)
 
 b. 使用如下命令
 
