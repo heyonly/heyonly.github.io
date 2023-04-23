@@ -1,4 +1,3 @@
-
 ---
 layout: post   
 title: 将pass加入到NewPassManager 
@@ -6,6 +5,10 @@ categories: LLVM
 description: LLVM 将pass加入到NewPassManager
 keywords: LLVM, LLVM Pass 
 ---
+
+
+
+
 
 本文基于`llvm14.0.0`
 
