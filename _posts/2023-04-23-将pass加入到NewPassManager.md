@@ -86,24 +86,30 @@ namespace  {
 
 
 /* New PM Registration */
-llvm::PassPluginLibraryInfo getByePluginInfo() {
-  return {LLVM_PLUGIN_API_VERSION, "AwesomePass", LLVM_VERSION_STRING,
-          [](PassBuilder &PB) {
-            PB.registerPipelineParsingCallback(
-                [](StringRef Name, llvm::FunctionPassManager &PM,
-                   ArrayRef<llvm::PassBuilder::PipelineElement>) {
-                  if (Name == "awe") {
-                    PM.addPass(AwesomePass());
-                    return true;
-                  }
-                  return false;
-                });
-          }};
+static bool callback(StringRef Name, llvm::FunctionPassManager &PM,
+                     ArrayRef<llvm::PassBuilder::PipelineElement>) {
+    if (Name == "awe") {
+      PM.addPass(AwesomePass());
+      return true;
+    }
+    return false;
 }
+
+static void callbackOpt(llvm::FunctionPassManager& PM, OptimizationLevel level) {
+    PM.addPass(AwesomePass());
+}
+
+static void registerCallbacks(PassBuilder &PB) {
+    PB.registerVectorizerStartEPCallback(callbackOpt);// clang 触发
+    
+    PB.registerPipelineParsingCallback(callback);// opt 触发
+}
+
+
 
 extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
 llvmGetPassPluginInfo() {
-  return getByePluginInfo();
+    return {LLVM_PLUGIN_API_VERSION, "awe", LLVM_VERSION_STRING, registerCallbacks};
 }
 
 ```
@@ -163,9 +169,12 @@ static bool isRequired() { return true; }
 接下来，就可以使用opt 调试：
 
 ```
-./opt --load-pass-plugin=/Users/heyonly/workspace/llvm/llvm-project/build/Debug/lib/Awesome.dylib --passes=awe /Users/heyonly/workspace/llvm/llvm-project/build/Debug/bin/main.ll -o /Users/heyonly/workspace/llvm/llvm-project/build/Debug/bin/after_main.ll
+$ ./opt --load-pass-plugin=/Users/heyonly/workspace/llvm/llvm-project/build/Debug/lib/Awesome.dylib --passes=awe /Users/heyonly/workspace/llvm/llvm-project/build/Debug/bin/main.ll -o /Users/heyonly/workspace/llvm/llvm-project/build/Debug/bin/after_main.ll
+
+
+$ ./clang -O3  -fpass-plugin=/Users/heyonly/workspace/llvm/llvm-project/build/Debug/lib/Bye.dylib -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -L/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib  /Users/heyonly/workspace/practise/llvmdemo2/llvmdemo2/main.c
+
 ```
 
-
-如何使用`clang` 加载还在研究中。
+至此，开发`pass` 流程 已走通，接下来就是研究利用`pass` 来定制需求了。
 
