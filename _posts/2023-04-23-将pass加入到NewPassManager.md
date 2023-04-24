@@ -36,15 +36,15 @@ if(WIN32 OR CYGWIN)
   set(LLVM_LINK_COMPONENTS Core Support)
 endif()
 
-add_llvm_pass_plugin( Awesome
+add_llvm_pass_plugin( Awesome MODULE
   Awesome.cpp
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Transforms/Awesome
 
   DEPENDS
   intrinsics_gen
-  BUILDTREE_ONLY
-  )
+)
+
 
 ```
 
