@@ -14,6 +14,14 @@ keywords: LLVM, LLVM Pass
 cmake -G Xcode -DLLVM_ENABLE_ASSERTIONS=On -DCMAKE_BUILD_TYPE=Debug -DLLVM_ENABLE_PROJECTS="clang;llvm;lld" ../llvm
 ```
 
+1.1 如果需要生成 符号表，在`clang` `llvm` `lld` 目录中的cmakelist.txt中加入：
+
+
+```
+set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS YES)
+set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym")
+```
+
 
 2. 打开xcode工程：
 
